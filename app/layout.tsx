@@ -11,7 +11,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         {/* Google Analytics */}
         <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX`}
+          src={`https://www.googletagmanager.com/gtag/js?id=G-8FMW07WMCS`}
           strategy="afterInteractive"
         />
         <Script id="google-analytics" strategy="afterInteractive">
