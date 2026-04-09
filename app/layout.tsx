@@ -1,10 +1,11 @@
+import { ReactNode } from 'react'
 import Script from 'next/script'
 import '../styles/globals.css'
 export const metadata = {
   title: 'Dataicd10 - Medical Coding Intelligence',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
