@@ -1,0 +1,101 @@
+import type { GetStaticProps, GetStaticPaths, NextPage } from 'next';
+import Head from 'next/head';
+import Link from 'next/link';
+import Breadcrumb from '../../../../components/Breadcrumb';
+import { getAllChapters, getSubSectionsByChapter } from '../../../../lib/data-engine/db';
+
+interface ChapterPageProps {
+  chapter: {
+    id: string;
+    title: string;
+  };
+  subSections: { id: string }[];
+}
+
+const ChapterPage: NextPage<ChapterPageProps> = ({ chapter, subSections }) => {
+  const crumbs = [
+    { label: 'Home', url: '/' },
+    { label: '2026 Codes', url: '/icd10cm/2026' },
+    { label: `Chapter ${chapter.id}` },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-100">
+      <Head>
+        <title>Chapter {chapter.id} - ICD-10 2026 Categories</title>
+        <meta name="description" content={`Categories under ICD-10 Chapter ${chapter.id}: ${chapter.title}`} />
+      </Head>
+
+      <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <Breadcrumb items={crumbs} />
+
+        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200/80 shadow-sm mt-6">
+          <div className="mb-10">
+            <span className="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-indigo-700 bg-indigo-100 rounded-full uppercase">
+              Chapter {chapter.id}
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              {chapter.title}
+            </h1>
+          </div>
+
+          <h2 className="text-lg font-black tracking-widest text-slate-400 uppercase mb-6">Sections within Chapter {chapter.id}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {subSections.map((sub) => (
+              <Link
+                key={sub.id}
+                href={`/icd10cm/2026/section/${sub.id}`}
+                className="group flex flex-col items-start justify-center p-6 bg-white rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all h-full"
+              >
+                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded mb-3">Section Block</span>
+                 <h3 className="text-2xl font-black text-indigo-600 transition-colors group-hover:text-indigo-800 tracking-tight">
+                    {sub.id}
+                 </h3>
+                 <p className="text-sm font-medium text-slate-500 mt-2">
+                    Browse code categories inside {sub.id}.
+                 </p>
+              </Link>
+            ))}
+          </div>
+          {subSections.length === 0 && (
+            <p className="text-slate-500 font-medium">No sections found for this chapter.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const chapters = getAllChapters() || [];
+  const paths = chapters.map((c) => ({
+    params: { id: c.id }
+  }));
+
+  return { paths, fallback: 'blocking' };
+};
+
+export const getStaticProps: GetStaticProps<ChapterPageProps> = async (context) => {
+  const id = context.params?.id as string;
+  const chapters = getAllChapters() || [];
+  const chapter = chapters.find(c => c.id === id);
+
+  if (!chapter) {
+    return { notFound: true };
+  }
+
+  const subSections = getSubSectionsByChapter(id);
+  const chapterTitleStr = Array.isArray(chapter.title) ? chapter.title.join(': ') : chapter.title || 'Unknown Title';
+
+  return {
+    props: {
+      chapter: {
+        id: chapter.id,
+        title: chapterTitleStr
+      },
+      subSections
+    }
+  };
+};
+
+export default ChapterPage;

@@ -1,0 +1,141 @@
+import { MetadataRoute } from 'next';
+import { getAllCodes } from '../lib/data-engine/db';
+
+export async function generateSitemaps() {
+  const allCodes = getAllCodes() || [];
+  const chunkSize = 40000;
+  const numSitemaps = Math.ceil(allCodes.length / chunkSize);
+  const sitemaps: { id: number }[] = [];
+  for (let i = 0; i < numSitemaps; i++) {
+    sitemaps.push({ id: i });
+  }
+  return sitemaps;
+}
+
+export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = 'https://dataicd10.com';
+  
+  const allCodes = getAllCodes() || [];
+  
+  const sitemapUrls: MetadataRoute.Sitemap = [];
+
+  if (id === 0) {
+    sitemapUrls.push(
+      {
+        url: `${baseUrl}/`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 1,
+      },
+      {
+        url: `${baseUrl}/icd10cm/2026`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      },
+      {
+        url: `${baseUrl}/about`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      },
+      {
+        url: `${baseUrl}/contact`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      },
+      {
+        url: `${baseUrl}/data-sources`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      },
+      {
+        url: `${baseUrl}/disclaimer`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      },
+      {
+        url: `${baseUrl}/privacy-policy`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      },
+      {
+        url: `${baseUrl}/terms`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      }
+    );
+
+    const chaptersMap = new Set<string>();
+    const sectionsMap = new Set<string>();
+    const categoriesMap = new Set<string>();
+
+    for (const c of allCodes) {
+      let titleStr = Array.isArray(c.chapter_title) ? c.chapter_title.join(': ') : c.chapter_title;
+      if (titleStr) {
+        const match = titleStr.match(/\(([A-Z][0-9]{2}-[A-Z][0-9]{2})\)$/);
+        const chapterId = match ? match[1] : titleStr;
+        if (chapterId) chaptersMap.add(chapterId);
+      }
+      
+      if (c.chapter_range) {
+        sectionsMap.add(c.chapter_range);
+      }
+
+      if (c.code_id && c.code_id.length === 3) {
+        categoriesMap.add(c.code_id);
+      }
+    }
+
+    chaptersMap.forEach(id => {
+      sitemapUrls.push({
+        url: `${baseUrl}/icd10cm/2026/chapter/${id}`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.8,
+      });
+    });
+
+    sectionsMap.forEach(id => {
+      sitemapUrls.push({
+        url: `${baseUrl}/icd10cm/2026/section/${id}`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.7,
+      });
+    });
+
+    categoriesMap.forEach(id => {
+      sitemapUrls.push({
+        url: `${baseUrl}/icd10cm/2026/category/${id}`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.6,
+      });
+    });
+  }
+
+  const chunkSize = 40000;
+  const start = id * chunkSize;
+  const end = Math.min(start + chunkSize, allCodes.length);
+  
+  const chunkCodes = allCodes.slice(start, end);
+
+  for (const c of chunkCodes) {
+    if (c.code_id) {
+       sitemapUrls.push({
+         url: `${baseUrl}/icd10cm/2026/code/${encodeURIComponent(c.code_id.toLowerCase().replace(/-/g, '.'))}`,
+         lastModified: new Date(),
+         changeFrequency: 'yearly',
+         priority: 0.6,
+       });
+    }
+  }
+
+  return sitemapUrls;
+}

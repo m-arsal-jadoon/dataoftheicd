@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "autoprefixer": "^10.4.27",
+    "flexsearch": "^0.8.212",
+    "framer-motion": "^12.38.0",
+    "next": "^16.2.1",
+    "postcss": "^8.5.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^6.0.2",
+    "xml2js": "^0.6.2"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "prebuild": "node scripts/build_database.js && node scripts/generate_sitemap.js",
+    "build": "next build",
+    "start": "next start"
+  }
+}
