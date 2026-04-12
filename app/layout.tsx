@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import Script from 'next/script'
+import { ThemeProvider } from '../components/ThemeProvider'
 import '../styles/globals.css'
 export const metadata = {
   title: 'Dataicd10 - Medical Coding Intelligence',
@@ -7,8 +8,9 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         {/* Google Analytics */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=G-8FMW07WMCS`}
@@ -23,7 +25,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     gtag('config', 'G-8FMW07WMCS');
   `}
         </Script>
-        {children}</body>
+        {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
