@@ -51,11 +51,13 @@ export default async function CodePage({ params }: { params: Promise<{ slug: str
   if (!codeData) {
       return (
          <Layout breadcrumbs={{}}>
-            <div className="min-h-[80vh] bg-slate-50 flex items-center justify-center p-4">
-               <div className="text-center bg-white p-10 rounded-2xl shadow-sm border border-slate-200 max-w-[500px]">
-                  <h1 className="text-4xl font-black text-slate-800 mb-2">Code Not Found</h1>
-                  <p className="text-slate-500 font-medium mb-8">We could not locate the exact ICD-10 billable diagnosis code or structural component for: <strong className="text-slate-900 border border-slate-200 px-2 py-1 rounded bg-slate-50 ml-1">{rawSlug}</strong></p>
-                  <Link href="/" className="inline-block px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors">Return to Directory</Link>
+            <div className="min-h-screen flex items-center justify-center p-4 font-sans" style={{ background: '#07070E' }}>
+               <div className="text-center p-10 rounded-2xl shadow-sm border max-w-[500px]" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}>
+                  <h1 className="text-3xl font-black text-white mb-2">Code Not Found</h1>
+                  <p className="font-medium mb-8" style={{ color: '#94a3b8' }}>We could not locate the exact ICD-10 billable diagnosis code or structural component for: <strong className="px-2 py-1 rounded ml-1" style={{ background: 'rgba(255,255,255,0.1)', color: '#e2e8f0' }}>{rawSlug}</strong></p>
+                  <Link href="/icd10cm/2026" className="inline-block px-8 py-3 font-bold rounded-xl transition-all hover:opacity-80 text-white" style={{ background: '#3b82f6' }}>
+                     Return to Directory
+                  </Link>
                </div>
             </div>
          </Layout>
