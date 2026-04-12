@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { getAllChapters, getAllCodes } from '../../../../../lib/data-engine/db';
+import { getAllChapters, getSubSectionsByChapter } from '../../../../../lib/data-engine/db';
 import Layout from '../../../../../components/Layout';
-import CategoryGrid, { type CategoryRecord, type ChapterDetails } from './_components/CategoryGrid';
+import SectionGrid, { type SectionRecord, type ChapterDetails } from './_components/SectionGrid';
 
 export default async function ChapterPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
@@ -32,21 +32,12 @@ export default async function ChapterPage({ params }: { params: Promise<{ slug: 
     title: chapterRow.title
   };
 
-  // Fetch all 3-letter categories valid for this chapter
-  const allCodes = getAllCodes();
-  const categories: CategoryRecord[] = allCodes.filter(c => {
-    let titleStr = Array.isArray(c.chapter_title) ? c.chapter_title.join(': ') : c.chapter_title;
-    const match = titleStr?.match(/\(([A-Z][0-9]{2}-[A-Z][0-9]{2})\)/);
-    const mId = match ? match[1] : titleStr;
-    return (mId?.toLowerCase() === decodedSlug) && (c.code_id.length === 3);
-  }).map(c => ({
-    code_id: c.code_id,
-    title: c.title
-  })).sort((a,b) => a.code_id.localeCompare(b.code_id, undefined, {numeric: true}));
+  // Fetch all Sections valid for this chapter
+  const sections: SectionRecord[] = getSubSectionsByChapter(decodedSlug);
 
   return (
     <Layout breadcrumbs={{ chapter: chapterRow }}>
-      <CategoryGrid chapter={chapter} categories={categories} />
+      <SectionGrid chapter={chapter} sections={sections} />
     </Layout>
   );
 }

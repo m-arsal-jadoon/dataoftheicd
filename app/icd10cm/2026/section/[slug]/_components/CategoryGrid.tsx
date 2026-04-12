@@ -9,13 +9,14 @@ export interface CategoryRecord {
   title: string;
 }
 
-export interface ChapterDetails {
+export interface SectionDetails {
   id: string;
-  title: string;
+  chapter_title?: string;
+  title?: string;
 }
 
 interface Props {
-  chapter: ChapterDetails;
+  section: SectionDetails;
   categories: CategoryRecord[];
 }
 
@@ -55,7 +56,7 @@ const CHAPTER_GRADIENTS: Record<string, string> = {
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function CategoryGrid({ chapter, categories }: Props) {
+export default function CategoryGrid({ section, categories }: Props) {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -72,8 +73,8 @@ export default function CategoryGrid({ chapter, categories }: Props) {
 
   const isSearching = query.trim().length > 0;
   
-  // Theme derived from the first letter of the chapter ID (e.g., 'A' from 'A00-B99')
-  const firstLetter = chapter.id.charAt(0).toUpperCase();
+  // Theme derived from the first letter of the section ID (e.g., 'A' from 'A00-A09')
+  const firstLetter = section.id.charAt(0).toUpperCase();
   const themeColor = CHAPTER_COLORS[firstLetter] || '#6366f1';
   const gradientClass = CHAPTER_GRADIENTS[firstLetter] || 'from-indigo-500 to-blue-600';
 
@@ -91,7 +92,7 @@ export default function CategoryGrid({ chapter, categories }: Props) {
             className="px-3 py-1 rounded-full text-[10px] font-extrabold tracking-[0.2em] uppercase border"
             style={{ color: themeColor, borderColor: `${themeColor}40`, background: `${themeColor}15` }}
           >
-            Chapter Range {chapter.id}
+            Section Block {section.id}
           </span>
           <span
             className="px-3 py-1 rounded-full text-[10px] font-extrabold tracking-[0.2em] uppercase border"
@@ -102,16 +103,16 @@ export default function CategoryGrid({ chapter, categories }: Props) {
         </div>
 
         <h1 className="text-[32px] sm:text-[44px] font-black leading-[1.1] tracking-tighter mb-4">
-          <span className="text-white">ICD-10-CM Chapter </span>
+          <span className="text-white">ICD-10-CM Section </span>
           <br className="sm:hidden" />
           <span
             className={`bg-clip-text text-transparent bg-gradient-to-r ${gradientClass}`}
           >
-            {chapter.title.split('(')[0].trim()}
+            {section.id}
           </span>
         </h1>
         <p className="text-[15px] font-medium max-w-2xl leading-relaxed" style={{ color: '#94a3b8' }}>
-          Explore all root categories mapped to this chapter range.
+          Explore all root categories mapped to this section block.
         </p>
 
         {/* Stats row */}
@@ -212,16 +213,16 @@ export default function CategoryGrid({ chapter, categories }: Props) {
             style={{ borderColor: 'rgba(255,255,255,0.07)' }}
           >
             <p className="text-[15px] font-semibold" style={{ color: '#475569' }}>
-              {categories.length === 0 ? 'No root categories mapped exclusively to this chapter.' : `No categories matching "${query}"`}
+              {categories.length === 0 ? 'No root categories mapped exclusively to this section.' : `No categories matching "${query}"`}
             </p>
             {isSearching && (
-              <button
-                onClick={() => setQuery('')}
-                className="mt-3 text-[13px] font-bold transition-opacity hover:opacity-80"
-                style={{ color: themeColor }}
-              >
-                Clear filter →
-              </button>
+               <button
+                 onClick={() => setQuery('')}
+                 className="mt-3 text-[13px] font-bold transition-opacity hover:opacity-80"
+                 style={{ color: themeColor }}
+               >
+                 Clear filter →
+               </button>
             )}
           </div>
         )}

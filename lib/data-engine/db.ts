@@ -136,8 +136,7 @@ export function getSubSectionsByChapter(mainChapterId: string) {
        if (!sectionsMap.has(c.chapter_range)) {
            sectionsMap.set(c.chapter_range, {
                id: c.chapter_range,
-               // Fallback: Infer the title of a sub-section block from its root codes later if necessary, 
-               // right now CDC just groups by `chapter_range` blocks (A00-A09).
+               title: Array.isArray(c.section_title) ? c.section_title.join(': ') : (c.section_title || `Section ${c.chapter_range}`)
            });
        }
     }
