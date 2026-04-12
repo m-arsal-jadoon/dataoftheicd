@@ -11,6 +11,7 @@ export interface CategoryRecord {
 
 export interface SectionDetails {
   id: string;
+  chapter_id?: string;
   chapter_title?: string;
   title?: string;
 }
@@ -83,10 +84,17 @@ export default function CategoryGrid({ section, categories }: Props) {
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8 pt-12 pb-6">
-        <Link href="/icd10cm/2026" className="inline-flex items-center text-[12px] font-bold text-slate-400 hover:text-white transition-colors mb-6 group">
-          <svg className="w-4 h-4 mr-1.5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
-          Back to Directory
-        </Link>
+        {section.chapter_id ? (
+          <Link href={`/icd10cm/2026/chapter/${section.chapter_id}`} className="inline-flex items-center text-[12px] font-bold text-slate-400 hover:text-white transition-colors mb-6 group">
+            <svg className="w-4 h-4 mr-1.5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+            Back to Chapter {section.chapter_id}
+          </Link>
+        ) : (
+          <Link href="/icd10cm/2026" className="inline-flex items-center text-[12px] font-bold text-slate-400 hover:text-white transition-colors mb-6 group">
+            <svg className="w-4 h-4 mr-1.5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+            Back to Directory
+          </Link>
+        )}
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <span
             className="px-3 py-1 rounded-full text-[10px] font-extrabold tracking-[0.2em] uppercase border"

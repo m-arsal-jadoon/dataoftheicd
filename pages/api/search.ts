@@ -1,24 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
-// Use flexsearch default Export
-import FlexSearch from 'flexsearch';
+import Fuse from 'fuse.js';
 
 // ----------------------------------------
-// INVERTED INDEX - FLEXSEARCH (Memory Cache)
+// INVERTED INDEX - FUSE.JS (Memory Cache)
 // ----------------------------------------
-// Tokenized Index configured perfectly for Score ranking
-// Tokenized Index configured perfectly for Score ranking
-let flexIndex: any = null;
-let memoryDb: any[] = [];
-let dbLoaded = false;
-const exactCodeMap = new Map<string, any>();
+// Use global namespace to preserve state across HMR & repeated API calls
+const globalAny: any = global;
+
+if (!globalAny.memoryDb) {
+    globalAny.memoryDb = [];
+    globalAny.fuseInstance = null;
+    globalAny.dbLoaded = false;
+    globalAny.exactCodeMap = new Map<string, any>();
+}
 
 // ----------------------------------------
 // MEDICAL SYNONYM MAP (Offloaded to Server)
 // ----------------------------------------
 const synonymMap: Record<string, string[]> = {
-  // Common terms strictly mapped to clinical phrases
   'sugar': ['diabetes', 'glucose', 'insulin', 'hyperglycemia', 'endocrine', 'mellitus'],
   'heart': ['cardiac', 'myocardial', 'cardio', 'coronary', 'atrial', 'ventricular', 'infarction', 'failure'],
   'chest': ['ribs', 'thorax', 'sternum', 'pectoral', 'respiratory', 'pleural', 'costal', 'pain'],
@@ -30,39 +31,6 @@ const synonymMap: Record<string, string[]> = {
   'liver': ['hepatic', 'cirrhosis', 'hepatitis']
 };
 
-const getExtendedQuery = (query: string): string => {
-  if (!query) return '';
-  const lowerQ = query.toLowerCase().trim();
-  let expandedTerms = [lowerQ];
-  const words = lowerQ.split(' ');
-  words.forEach(w => {
-    if (synonymMap[w]) {
-      expandedTerms = [...expandedTerms, ...synonymMap[w]];
-    }
-  });
-  return expandedTerms.join(' '); 
-};
-
-// ----------------------------------------
-// GOOGLE-STYLE RELEVANCY ENGINE
-// ----------------------------------------
-const computeGoogleScore = (item: any, query: string) => {
-    if (!query) return 100; // Auto-100 for categorical direct clicks
-    const q = query.toLowerCase().trim();
-    const code = item.code_id.toLowerCase();
-    const title = (item.title || '').toLowerCase();
-    const incl = (item.inclusions || '').toLowerCase();
-    
-    const cleanQ = q.replace(/[^a-z0-9]/g, '');
-    const cleanCode = code.replace(/[^a-z0-9]/g, '');
-    
-    if (cleanCode === cleanQ) return 100;
-    if (title === q || title.includes(q)) return 90;
-    if (incl.includes(q)) return 70;
-    
-    return 50; 
-};
-
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const query = (req.query.q as string || '').trim();
   const filter = req.query.filter as string;
@@ -70,36 +38,36 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const gender = req.query.gender as string;
   const age = req.query.age as string;
   
-  if (!dbLoaded || !flexIndex || memoryDb.length === 0) {
+  if (!globalAny.dbLoaded || !globalAny.fuseInstance || globalAny.memoryDb.length === 0) {
       try {
-          const dbPath = path.join(process.cwd(), 'data', 'search-index.json');
-          if (fs.existsSync(dbPath)) {
-              const rawData = fs.readFileSync(dbPath, 'utf8');
-              const arrDb = JSON.parse(rawData);
+          const dbDataPath = path.join(process.cwd(), 'data', 'mini_index.json');
+          const fuseIndexPath = path.join(process.cwd(), 'data', 'fuse-index.json');
+          
+          if (fs.existsSync(dbDataPath) && fs.existsSync(fuseIndexPath)) {
+              const rawData = fs.readFileSync(dbDataPath, 'utf8');
+              globalAny.memoryDb = JSON.parse(rawData);
               
-              memoryDb = arrDb.map((row: any) => ({
-                  code_id: row[0],
-                  title: row[1],
-                  is_billable: !!row[2]
-              }));
+              const rawIndex = fs.readFileSync(fuseIndexPath, 'utf8');
+              const myIndex = Fuse.parseIndex(JSON.parse(rawIndex));
               
-              flexIndex = new FlexSearch.Document({
-                  preset: "score",    
-                  tokenize: "forward", 
-                  document: {
-                      id: "code_id", 
-                      index: ["code_id", "title"], 
-                      store: true
-                  }
-              });
+              globalAny.fuseInstance = new Fuse(globalAny.memoryDb, {
+                  includeScore: true,
+                  includeMatches: true,
+                  threshold: 0.35, 
+                  ignoreLocation: true,
+                  useExtendedSearch: true,
+                  keys: [
+                    { name: 'code_id', weight: 1.0 },
+                    { name: 'title', weight: 0.7 }
+                  ]
+              }, myIndex);
               
-              memoryDb.forEach((item: any) => {
-                 flexIndex.add(item);
+              globalAny.memoryDb.forEach((item: any) => {
                  const cCode = item.code_id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                 exactCodeMap.set(cCode, item);
+                 globalAny.exactCodeMap.set(cCode, item);
               });
               
-              dbLoaded = true;
+              globalAny.dbLoaded = true;
           }
       } catch(e) {
           console.error(e);
@@ -109,7 +77,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // INTERCEPT: Categorical Pure Filters bypassing FlexSearch text logic
   if (!query && (filter || billable || gender || age)) {
-      let filteredArray = memoryDb;
+      let filteredArray = globalAny.memoryDb;
       
       if (filter === 'new') filteredArray = filteredArray.filter(i => i.is_new);
       if (filter === 'deleted') filteredArray = filteredArray.filter(i => i.is_deleted);
@@ -119,65 +87,56 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       
       const payload = filteredArray.slice(0, 10).map(item => ({
          item,
-         googleScore: 100
+         score: 0.0001
       }));
       return res.status(200).json({ results: payload });
   }
 
-  if (!query || !flexIndex) {
+  if (!query || !globalAny.fuseInstance) {
       return res.status(200).json({ results: [] });
   }
 
   // ==============================================================
-  // 4-TIER SEARCH SPEC ENGINE (Exact > Prefix > Keyword > Fuzzy)
+  // PREFIX EXACT + FUSE.JS ENGINE 
   // ==============================================================
   const cleanQ = query.toLowerCase().replace(/[^a-z0-9]/g, '');
   const isPotentialCode = cleanQ.length >= 3 && cleanQ.length <= 8;
   
   let exactMatch: any = null;
   let prefixMatches: any[] = [];
-  let flexResultsMap = new Map();
 
-  // Tier 1 & 2: Exact Match & Directed Prefix Walk
   if (isPotentialCode) {
-      if (exactCodeMap.has(cleanQ)) {
-          exactMatch = exactCodeMap.get(cleanQ);
+      if (globalAny.exactCodeMap.has(cleanQ)) {
+          exactMatch = globalAny.exactCodeMap.get(cleanQ);
       }
-
-      memoryDb.forEach(item => {
-          const codeStr = (item.code || item.code_id || '').toLowerCase();
-          const cleanCode = codeStr.replace(/[^a-z0-9]/g, '');
-          
-          if (cleanCode.startsWith(cleanQ)) {
-              prefixMatches.push(item);
-          }
-      });
+      // Speed Optimization: If it's short like 'M54', do a rapid prefix walk before Fuse scanning!
+      if (cleanQ.length <= 5) {
+          prefixMatches = globalAny.memoryDb.filter((m: any) => {
+             const c = (m.code_id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+             return c.startsWith(cleanQ);
+          }).slice(0, 30);
+      }
   }
 
-  // Tier 3 & 4: Keyword Directed & Lexicon Synonyms (FlexSearch)
-  let expandedQuery = [query.toLowerCase()];
-  query.toLowerCase().split(' ').forEach(w => {
-      if (synonymMap[w]) expandedQuery.push(...synonymMap[w]);
-  });
-  
-  expandedQuery.forEach(term => {
-      if (!term) return;
-      const rawResults = flexIndex.search(term, { enrich: true, limit: 120 });
-      rawResults.forEach((fieldResult: any) => {
-          fieldResult.result.forEach((docEntry: any) => {
-              if (!flexResultsMap.has(docEntry.id)) {
-                  // docEntry.doc contains the stored object in flexSearch.
-                  flexResultsMap.set(docEntry.id, memoryDb.find(m => (m.code || m.code_id) === docEntry.id) || docEntry.doc);
-              }
-          });
-      });
-  });
+  // To support multi-words better, split and use the extended search syntax 
+  // if standard fuzzy doesn't yield high scores, but we just use pure query with typo tolerance
+  let rawResults: any[] = [];
+  let isDidYouMean = false;
 
-  // Compose Final Prioritized Structure maintaining { item, googleScore } interface
+  // Let Prefix take precedence. Limit Fuse to only compute if prefix is heavily lacking.
+  if (prefixMatches.length < 20) {
+      rawResults = globalAny.fuseInstance.search(query, { limit: 50 });
+      if (rawResults.length === 0) {
+          const looseFuse = new Fuse(globalAny.memoryDb, { threshold: 0.6, keys: ['code_id', 'title'], ignoreLocation: true });
+          rawResults = looseFuse.search(query, { limit: 1 });
+          if (rawResults.length > 0) isDidYouMean = true;
+      }
+  }
+  
   let finalPayload: any[] = [];
   let distinctIds = new Set<string>();
 
-  const pushSafely = (item: any, score: number) => {
+  const pushSafely = (item: any, score: number, matches?: any[]) => {
       if (!item) return;
       const id = item.code || item.code_id;
       if (!distinctIds.has(id)) {
@@ -187,29 +146,35 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           item.title = item.short_title || item.title;
           item.is_billable = item.billable_flag !== undefined ? item.billable_flag : item.is_billable;
           item.plain_english_explanation = item.plain_english_explanation || 'No plain-English explanation available.';
-          finalPayload.push({ item, googleScore: score });
+          finalPayload.push({ item, score, matches: matches || [] });
       }
   };
 
-  // [Pos 1] Tier 1: Absolute Exact Match
-  if (exactMatch) pushSafely(exactMatch, 100);
+  // 1. Exact Absolute Code Match always pos 1
+  if (exactMatch) {
+      pushSafely(exactMatch, 0.0001); // 0.00 = perfect match score in Fuse
+  }
 
-  // [Pos 2+] Tier 2: Prefix Descendants (Sorted by shortest string length)
-  prefixMatches.sort((a, b) => (a.code || a.code_id || '').length - (b.code || b.code_id || '').length);
-  prefixMatches.forEach(item => pushSafely(item, 95));
+  // 2. Prefix Matches Ranked Second
+  prefixMatches.sort((a: any, b: any) => (a.code_id || '').length - (b.code_id || '').length);
+  prefixMatches.forEach((pm: any) => {
+      pushSafely(pm, 0.01);
+  });
 
-  // [Pos rem] Tier 3 & 4: Relevant Context Text
-  Array.from(flexResultsMap.values()).forEach(item => {
-      pushSafely(item, 80);
+  // 3. Fuse Ranked Items
+  rawResults.forEach((res: any) => {
+      pushSafely(res.item, res.score, res.matches);
   });
 
   // Re-apply standard filters to the final constructed array
   let mappedResults = finalPayload;
   if (filter === 'new') mappedResults = mappedResults.filter(i => i.item.is_new);
   if (filter === 'deleted') mappedResults = mappedResults.filter(i => i.item.is_deleted);
-  if (billable === 'true') mappedResults = mappedResults.filter(i => i.item.is_billable);
+  if (billable === 'true') mappedResults = mappedResults.filter(i => i.item.is_billable === true || i.item.billable_flag === true || i.item.billable_flag === "1");
   if (gender) mappedResults = mappedResults.filter(i => (i.item.gender || '').toLowerCase() === gender.toLowerCase());
   if (age) mappedResults = mappedResults.filter(i => (i.item.age_group || '').toLowerCase() === age.toLowerCase());
 
-  return res.status(200).json({ results: mappedResults.slice(0, 10) });
+  // Limit frontend delivery top 40 array length max to prevent DOM rendering lag
+  return res.status(200).json({ results: mappedResults.slice(0, 40), didYouMean: isDidYouMean });
 }
+

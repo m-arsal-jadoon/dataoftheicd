@@ -37,8 +37,57 @@ const CHAPTER_GRADIENTS: Record<string, string> = {
   'U': 'from-fuchsia-500 to-purple-600',
 };
 
+const EMOJI_MAP: { range: string, emoji: string }[] = [
+  { range: 'A00-B99', emoji: '🦠' },
+  { range: 'C00-D49', emoji: '🔬' },
+  { range: 'D50-D89', emoji: '🩸' },
+  { range: 'E00-E89', emoji: '⚗️' },
+  { range: 'F00-F99', emoji: '🧠' },
+  { range: 'G00-G99', emoji: '⚡' },
+  { range: 'H00-H59', emoji: '👁️' },
+  { range: 'H60-H95', emoji: '🔊' },
+  { range: 'I00-I99', emoji: '❤️' },
+  { range: 'J00-J99', emoji: '💨' },
+  { range: 'K00-K95', emoji: '🫃' },
+  { range: 'L00-L99', emoji: '🩹' },
+  { range: 'M00-M99', emoji: '🦴' },
+  { range: 'N00-N99', emoji: '🫘' },
+  { range: 'O00-O9A', emoji: '🤱' },
+  { range: 'P00-P96', emoji: '👶' },
+  { range: 'Q00-Q99', emoji: '🧬' },
+  { range: 'R00-R99', emoji: '📊' },
+  { range: 'S00-T88', emoji: '🩺' },
+  { range: 'V00-Y99', emoji: '⚠️' },
+  { range: 'Z00-Z99', emoji: '📋' },
+  { range: 'U00-U85', emoji: '🆕' }
+];
 
-export default function ClientDashboard({ codeData, relations, rawTitle, clinicalPathways, alternatives, chapterStr, sectionStr, parentId }: any) {
+function getEmoji(code: string): string {
+    if (!code) return '📋';
+    const letter = code.charAt(0).toUpperCase();
+    let num = 0;
+    const numStr = code.replace(/[^0-9]/g, '');
+    if (numStr) num = parseInt(numStr.substring(0,2), 10);
+    
+    for (const entry of EMOJI_MAP) {
+        const [start, end] = entry.range.split('-');
+        const startLetter = start.charAt(0);
+        const endLetter = end.charAt(0);
+        const startNum = parseInt(start.substring(1, 3), 10);
+        const endNum = parseInt(end.substring(1, 3), 10);
+        
+        if (letter > startLetter && letter < endLetter) return entry.emoji;
+        if (startLetter === endLetter && letter === startLetter) {
+             if (num >= startNum && num <= endNum) return entry.emoji;
+        } else if (letter === startLetter || letter === endLetter) {
+             if (letter === startLetter && num >= startNum) return entry.emoji;
+             if (letter === endLetter && num <= endNum) return entry.emoji;
+        }
+    }
+    return '📋';
+}
+
+export default function ClientDashboard({ codeData, relations, rawTitle, clinicalPathways, alternatives, chapterStr, sectionStr, sectionId, parentId }: any) {
   const [showAllRelated, setShowAllRelated] = useState(false);
   const isBillable = codeData.billable_flag === "1" || codeData.billable_flag === true || codeData.is_billable === true || codeData.billable === true;
 
@@ -58,6 +107,7 @@ export default function ClientDashboard({ codeData, relations, rawTitle, clinica
   const firstLetter = codeData.code_id ? codeData.code_id.charAt(0).toUpperCase() : 'A';
   const themeColor = CHAPTER_COLORS[firstLetter] || '#6366f1';
   const gradientClass = CHAPTER_GRADIENTS[firstLetter] || 'from-indigo-500 to-blue-600';
+  const emojiSymbol = getEmoji(codeData.code_id);
 
   return (
     <div className="min-h-[80vh] selection:bg-blue-900/30 overflow-x-hidden font-sans" style={{ background: '#07070E' }}>
@@ -78,52 +128,76 @@ export default function ClientDashboard({ codeData, relations, rawTitle, clinica
             {/* COLUMN 1: Main Content Header & Alternatives (approx 45% -> col-span-5) */}
             <div className="md:col-span-12 lg:col-span-5 flex flex-col relative pr-0 lg:pr-4">
                
-               {/* Quick Actions - Floating Right inside the col */}
-               <div className="absolute right-0 top-0 flex flex-col gap-4 text-slate-500 z-20">
-                  <button onClick={() => navigator.clipboard.writeText(codeData.code_id)} className="hover:text-white transition p-2 rounded-xl border border-transparent hover:border-slate-800 hover:bg-slate-800/50 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]" title="Copy Code">
-                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                  </button>
-                  <button onClick={() => window.print()} className="hover:text-white transition p-2 rounded-xl border border-transparent hover:border-slate-800 hover:bg-slate-800/50 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]" title="Print Details">
-                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                  </button>
-                  <button onClick={() => { if(navigator.share) navigator.share({url: window.location.href}); else alert('Copied Link!'); }} className="hover:text-white transition p-2 rounded-xl border border-transparent hover:border-slate-800 hover:bg-slate-800/50 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]" title="Share Code">
-                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                  </button>
-               </div>
+               {/* Main Title Bento Block */}
+               <div className="relative overflow-hidden rounded-[2rem] border p-6 sm:p-8 mb-8 flex flex-col shadow-xl transition-colors duration-300" 
+                    style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(24px)' }}>
+                  
+                  {/* Decorative Glow */}
+                  <div className="absolute top-0 right-0 w-48 h-48 opacity-100 pointer-events-none rounded-[2rem]" 
+                       style={{ background: `radial-gradient(circle at top right, ${themeColor}15 0%, transparent 70%)` }} />
+                  
+                  {/* 1. Top Header Row: Badges */}
+                  <div className="relative z-10 flex items-center justify-between w-full mb-6">
+                     <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-[3px] rounded uppercase text-[9.5px] font-black tracking-widest border border-slate-700 text-slate-400 bg-slate-800/30">
+                           FY 2026
+                        </span>
+                        {isBillable ? (
+                           <span className="px-2.5 py-[3px] rounded uppercase text-[9.5px] font-black tracking-widest border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 flex items-center shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                              BILLABLE
+                           </span>
+                        ) : (
+                           <span className="px-2.5 py-[3px] rounded uppercase text-[9.5px] font-black tracking-widest border border-rose-500/30 text-rose-400 bg-rose-500/10 flex items-center shadow-[0_0_10px_rgba(244,63,94,0.1)]">
+                              <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                              NON-BILLABLE
+                           </span>
+                        )}
+                     </div>
+                  </div>
 
-               {/* Badges */}
-               <div className="flex items-center gap-2 mb-4">
-                  <span className="px-2.5 py-[3px] rounded uppercase text-[9.5px] font-black tracking-widest border border-slate-700 text-slate-400 bg-slate-800/30">
-                     FY 2026
-                  </span>
-                  {isBillable ? (
-                     <span className="px-2.5 py-[3px] rounded uppercase text-[9.5px] font-black tracking-widest border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 flex items-center shadow-[0_0_10px_rgba(16,185,129,0.1)]">
-                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
-                        BILLABLE
-                     </span>
-                  ) : (
-                     <span className="px-2.5 py-[3px] rounded uppercase text-[9.5px] font-black tracking-widest border border-rose-500/30 text-rose-400 bg-rose-500/10 flex items-center shadow-[0_0_10px_rgba(244,63,94,0.1)]">
-                        <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        NON-BILLABLE
-                     </span>
+                  {/* 2. Center Info Section */}
+                  <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6 w-full mb-3 md:mb-1">
+                     
+                     {/* Left: Icon */}
+                     <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-[40px] flex-shrink-0" 
+                          style={{ background: `${themeColor}15`, border: `1px solid ${themeColor}25`, boxShadow: `0 0 40px ${themeColor}20` }}>
+                         {emojiSymbol}
+                     </div>
+                     
+                     {/* Middle: Code and Title */}
+                     <div className="flex flex-col flex-1 text-left leading-[1.2]">
+                        <h1 className={`text-[52px] sm:text-[68px] lg:text-[76px] font-black tracking-tighter mb-2 bg-clip-text text-transparent bg-gradient-to-r ${gradientClass}`} style={{ filter: `drop-shadow(0 0 12px ${themeColor}20)` }}>
+                            {codeData.code_id}
+                        </h1>
+                        <h2 className="text-[18px] sm:text-[20px] font-bold text-slate-300 leading-[1.4] tracking-tight">
+                           {rawTitle}
+                        </h2>
+                     </div>
+
+                     {/* Right: Action Icons */}
+                     <div className="flex sm:flex-col gap-2 mt-4 sm:mt-0 ml-0 sm:ml-auto text-slate-500 flex-shrink-0 w-full sm:w-auto overflow-hidden">
+                        <button onClick={() => navigator.clipboard.writeText(codeData.code_id)} className="flex-1 sm:flex-none hover:text-white transition p-2 rounded-xl border border-slate-700/50 bg-slate-800/30 hover:border-slate-600 hover:bg-slate-700 sm:w-10 sm:h-10 flex items-center justify-center" title="Copy Code">
+                           <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </button>
+                        <button onClick={() => window.print()} className="flex-1 sm:flex-none hover:text-white transition p-2 rounded-xl border border-slate-700/50 bg-slate-800/30 hover:border-slate-600 hover:bg-slate-700 sm:w-10 sm:h-10 flex items-center justify-center" title="Print Details">
+                           <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        </button>
+                        <button onClick={() => { if(navigator.share) navigator.share({url: window.location.href}); else alert('Copied Link!'); }} className="flex-1 sm:flex-none hover:text-white transition p-2 rounded-xl border border-slate-700/50 bg-slate-800/30 hover:border-slate-600 hover:bg-slate-700 sm:w-10 sm:h-10 flex items-center justify-center" title="Share Code">
+                           <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                        </button>
+                     </div>
+                  </div>
+                  
+                  {/* Non-billable notice inside block */}
+                  {!isBillable && (
+                     <div className="bg-rose-500/10 border-l-[3px] border-rose-500 p-4 mt-6 rounded-r-xl w-full shadow-[inset_0_0_20px_rgba(244,63,94,0.05)] relative z-10">
+                        <p className="text-[13px] font-bold text-rose-300">
+                           This header code is strictly structural. Claims require a more specific sub-code below.
+                        </p>
+                     </div>
                   )}
                </div>
-
-               {/* Main Title Block */}
-               <h1 className={`text-[64px] lg:text-[76px] font-black leading-[1] tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r ${gradientClass}`}>
-                   {codeData.code_id}
-               </h1>
-               
-               {!isBillable && (
-                  <div className="bg-rose-500/10 border-l-[3px] border-rose-500 p-4 mb-6 rounded-r-xl max-w-[90%] shadow-[inset_0_0_20px_rgba(244,63,94,0.05)]">
-                     <p className="text-[13px] font-bold text-rose-300">
-                        This header code is strictly structural. Claims require a more specific sub-code below.
-                     </p>
-                  </div>
-               )}
-               <h2 className="text-[20px] font-bold text-white leading-snug mb-8 w-[90%] tracking-tight pr-10">
-                  {rawTitle}
-               </h2>
 
                {/* Editorial Plain English Box */}
                {codeData.plain_english_explanation && (
@@ -240,7 +314,11 @@ export default function ClientDashboard({ codeData, relations, rawTitle, clinica
                   <div className="relative">
                      <span className="absolute -left-[16px] w=[4px] h-[4px] min-w-[4px] min-h-[4px] bg-slate-600 rounded-full top-1.5" />
                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.1em] mb-1">Section</p>
-                     <p className="text-[10.5px] font-medium text-slate-400 line-clamp-3 leading-[1.35]">{sectionStr}</p>
+                     {sectionId ? (
+                        <Link href={`/icd10cm/2026/section/${sectionId}`} className="inline-block text-[10.5px] font-bold text-slate-300 hover:text-white hover:underline line-clamp-3 leading-[1.35] transition-colors">{sectionStr}</Link>
+                     ) : (
+                        <p className="text-[10.5px] font-bold text-slate-300 line-clamp-3 leading-[1.35]">{sectionStr}</p>
+                     )}
                   </div>
                   <div className="relative">
                      <span className="absolute -left-[16px] w=[4px] h-[4px] min-w-[4px] min-h-[4px] bg-slate-600 rounded-full top-1.5" />

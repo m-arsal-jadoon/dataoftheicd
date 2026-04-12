@@ -90,7 +90,8 @@ export default async function CodePage({ params }: { params: Promise<{ slug: str
   const alternatives = specificBillableChildren.length > 0 ? specificBillableChildren : (relations.siblings.length > 0 ? relations.siblings : relations.fallbackRelated);
 
   const chapterStr = Array.isArray(codeData.chapter_title) ? codeData.chapter_title.join(': ') : (codeData.chapter_title || "Unspecified Chapter");
-  const sectionStr = Array.isArray(codeData.section_title) ? codeData.section_title.join(': ') : (codeData.section_title || "Unspecified Section");
+  const sectionStr = Array.isArray(codeData.section_title) ? codeData.section_title.join(': ') : (codeData.section_title || (codeData.chapter_range ? `Section ${codeData.chapter_range}` : "Unspecified Section"));
+  const sectionId = codeData.chapter_range || "";
   const parentId = codeData.parent_id || codeData.code_id.substring(0, 3);
 
   return (
@@ -103,6 +104,7 @@ export default async function CodePage({ params }: { params: Promise<{ slug: str
             alternatives={alternatives}
             chapterStr={chapterStr}
             sectionStr={sectionStr}
+            sectionId={sectionId}
             parentId={parentId}
          />
       </Layout>

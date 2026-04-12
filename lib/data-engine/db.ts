@@ -113,9 +113,11 @@ export function getAllChapters() {
         if (!chaptersMap.has(mainId)) {
             chaptersMap.set(mainId, {
                 id: mainId,
-                title: titleStr
+                title: titleStr,
+                codeCount: 0
             });
         }
+        chaptersMap.get(mainId).codeCount++;
     }
   });
   

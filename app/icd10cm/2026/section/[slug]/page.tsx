@@ -28,10 +28,14 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
   const sectionId = decodedSlug.toUpperCase();
   const rawChapterTitle = categoriesRecords[0]?.chapter_title;
-  const chapterTitleStr = Array.isArray(rawChapterTitle) ? rawChapterTitle.join(': ') : rawChapterTitle;
+  const chapterTitleStr = Array.isArray(rawChapterTitle) ? rawChapterTitle.join(': ') : rawChapterTitle || '';
+
+  const chapterMatch = chapterTitleStr.match(/\(([A-Z][0-9]{2}-[A-Z][0-9]{2})\)$/);
+  const chapterId = chapterMatch ? chapterMatch[1] : '';
 
   const section: SectionDetails = {
     id: sectionId,
+    chapter_id: chapterId,
     chapter_title: chapterTitleStr
   };
 

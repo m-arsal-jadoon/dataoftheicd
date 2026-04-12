@@ -62,13 +62,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   }
 
   // Transform into minimal payload
-  const chapterId = categoryRaw.chapter_range ? (Array.isArray(categoryRaw.chapter_range) ? categoryRaw.chapter_range[0] : categoryRaw.chapter_range) : '';
+  const sectionId = categoryRaw.chapter_range ? (Array.isArray(categoryRaw.chapter_range) ? categoryRaw.chapter_range[0] : categoryRaw.chapter_range) : '';
   const chapterTitleStr = Array.isArray(categoryRaw.chapter_title) ? categoryRaw.chapter_title.join(': ') : (categoryRaw.chapter_title || '');
   
   const categoryDetails: CategoryDetails = {
     code_id: categoryRaw.code_id,
     title: categoryRaw.title,
-    chapter_id: chapterId,
+    section_id: sectionId,
     chapter_title: chapterTitleStr,
   };
 

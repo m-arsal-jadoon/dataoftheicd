@@ -13,7 +13,7 @@ export interface SerializedRecord {
 export interface CategoryDetails {
   code_id: string;
   title: string;
-  chapter_id: string;
+  section_id: string;
   chapter_title: string;
 }
 
@@ -84,10 +84,10 @@ export default function CodeGrid({ category, codes }: Props) {
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8 pt-12 pb-6">
-        {category.chapter_id && (
-           <Link href={`/icd10cm/2026/chapter/${encodeURIComponent(category.chapter_id)}`} className="inline-flex items-center text-[12px] font-bold text-slate-400 hover:text-white transition-colors mb-6 group">
+        {category.section_id && (
+           <Link href={`/icd10cm/2026/section/${encodeURIComponent(category.section_id)}`} className="inline-flex items-center text-[12px] font-bold text-slate-400 hover:text-white transition-colors mb-6 group">
              <svg className="w-4 h-4 mr-1.5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
-             Back to Chapter {category.chapter_id}
+             Back to Section {category.section_id}
            </Link>
         )}
         
