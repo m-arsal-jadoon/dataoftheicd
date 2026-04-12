@@ -126,25 +126,25 @@ export default function GlobalBreadcrumb({ breadcrumbs }: { breadcrumbs?: any })
   };
 
   return (
-    <div className="bg-slate-50/80 backdrop-blur-md border-b border-slate-200 w-full flex items-center shadow-sm">
+    <div className="bg-slate-50/80 dark:bg-[#07070E]/80 backdrop-blur-md border-b border-slate-200 dark:border-gray-800 w-full flex items-center shadow-sm transition-colors duration-300">
        <div className="w-full mx-auto flex flex-col md:flex-row md:items-center justify-between min-h-[48px] px-4 lg:px-8">
           
-          <div className="flex-1 min-w-0 flex items-center text-[12.5px] font-medium text-[#7C8B9F] gap-0.5 py-3 md:py-0 w-full overflow-x-auto no-scrollbar whitespace-nowrap">
+          <div className="flex-1 min-w-0 flex items-center text-[12.5px] font-medium text-[#7C8B9F] dark:text-slate-400 gap-0.5 py-3 md:py-0 w-full overflow-x-auto no-scrollbar whitespace-nowrap transition-colors duration-300">
              {sequence.map((item, idx) => (
                 <React.Fragment key={idx}>
                    {item.isGhost ? (
-                       <Link href={item.url!} className="text-slate-400 opacity-50 font-medium tracking-tight px-1 italic hover:text-blue-500 hover:opacity-100 transition-all duration-300" title="Last visited page">
+                       <Link href={item.url!} className="text-slate-400 dark:text-slate-500 opacity-50 font-medium tracking-tight px-1 italic hover:text-blue-500 dark:hover:text-blue-400 hover:opacity-100 transition-all duration-300" title="Last visited page">
                           {item.label}
                        </Link>
                    ) : item.isCurrent && !ghostPath ? (
-                       <span className="text-slate-900 font-bold tracking-tight px-1">{item.label}</span>
+                       <span className="text-slate-900 dark:text-slate-200 font-bold tracking-tight px-1 transition-colors duration-300">{item.label}</span>
                    ) : item.isCurrent && ghostPath ? (
-                       <Link href={item.url!} className="hover:text-blue-600 transition px-1 font-bold text-slate-800">{item.label}</Link>
+                       <Link href={item.url!} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 px-1 font-bold text-slate-800 dark:text-slate-300">{item.label}</Link>
                    ) : (
-                       <Link href={item.url!} className="hover:text-blue-600 transition px-1">{item.label}</Link>
+                       <Link href={item.url!} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 px-1">{item.label}</Link>
                    )}
                    {idx < sequence.length - 1 && (
-                       <span className={`text-slate-300 mx-0.5 mt-0.5 ${sequence[idx+1]?.isGhost ? 'opacity-50' : ''}`}>
+                       <span className={`text-slate-300 dark:text-slate-600 mx-0.5 mt-0.5 transition-colors duration-300 ${sequence[idx+1]?.isGhost ? 'opacity-50' : ''}`}>
                           <svg className="w-3 h-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path></svg>
                        </span>
                    )}
@@ -152,7 +152,7 @@ export default function GlobalBreadcrumb({ breadcrumbs }: { breadcrumbs?: any })
              ))}
           </div>
 
-          <div className="w-full md:w-[320px] h-[40px] md:h-8 flex bg-white md:bg-white/80 md:border border-slate-200 rounded-md shrink-0 mb-3 md:mb-0 shadow-sm ml-0 md:ml-4">
+          <div className="w-full md:w-[320px] h-[40px] md:h-8 flex bg-white dark:bg-gray-900 md:bg-white/80 dark:md:bg-gray-900/80 md:border border-slate-200 dark:border-gray-700 rounded-md shrink-0 mb-3 md:mb-0 shadow-sm ml-0 md:ml-4 transition-colors duration-300">
              <form onSubmit={handleSearch} className="flex items-center justify-between w-full h-full px-3">
                 <input 
                   type="text" 
@@ -160,9 +160,9 @@ export default function GlobalBreadcrumb({ breadcrumbs }: { breadcrumbs?: any })
                   onChange={(e) => setNavQuery(e.target.value)}
                   placeholder="Search Dataicd10..." 
                   autoComplete="off" 
-                  className="flex-1 text-[13px] bg-transparent outline-none placeholder-[#7C8B9F] font-medium text-slate-700 h-full py-2 md:py-0 w-full" 
+                  className="flex-1 text-[13px] bg-transparent outline-none placeholder-[#7C8B9F] dark:placeholder-slate-500 font-medium text-slate-700 dark:text-slate-200 h-full py-2 md:py-0 w-full transition-colors duration-300" 
                 />
-                <button type="submit" className="text-slate-500 transition flex items-center h-full hover:text-blue-600">
+                <button type="submit" className="text-slate-500 dark:text-slate-400 transition-colors duration-300 flex items-center h-full hover:text-blue-600 dark:hover:text-blue-400">
                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </button>
              </form>

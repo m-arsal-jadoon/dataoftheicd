@@ -42,40 +42,40 @@ const SectionPage: NextPage<any> = (props) => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-100">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#07070E] text-slate-800 transition-colors duration-300 selection:bg-blue-100">
       <Head>
         <title>Section {sectionId} - ICD-10 2026 Categories</title>
         <meta name="description" content={`Categories under ICD-10 Section ${sectionId}`} />
       </Head>
 
       <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200/80 shadow-sm mt-6">
+        <div className="bg-white dark:bg-gray-900/20 rounded-3xl p-8 sm:p-12 border border-slate-200/80 dark:border-gray-800 shadow-sm mt-6 transition-all duration-300">
           <div className="mb-10">
-            <span className="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-emerald-700 bg-emerald-100 rounded-full uppercase">
+            <span className="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 rounded-full uppercase transition-colors duration-300">
               Section Code Block
             </span>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight transition-colors duration-300">
               Diseases and Conditions: {sectionId}
             </h1>
           </div>
 
-          <h2 className="text-lg font-black tracking-widest text-slate-400 uppercase mb-6">Categories</h2>
+          <h2 className="text-lg font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase mb-6 transition-colors duration-300">Categories</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {categories.map((cat: any) => (
               <Link
                 key={cat.code_id}
                 href={`/icd10cm/2026/category/${cat.code_id}`}
-                className="group block p-5 bg-white rounded-xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all h-full flex flex-col"
+                className="group block p-5 bg-white dark:bg-gray-900/50 backdrop-blur-md rounded-xl border border-slate-200 dark:border-gray-800 hover:border-emerald-400 dark:hover:border-blue-500/50 hover:shadow-md transition-all duration-300 h-full flex flex-col"
               >
                 <div className="flex items-center justify-between mb-2">
-                   <h3 className="text-lg font-black text-emerald-600 transition-colors group-hover:text-emerald-800 tracking-tight">
+                   <h3 className="text-lg font-black text-emerald-600 dark:text-emerald-500 transition-colors group-hover:text-emerald-800 dark:group-hover:text-emerald-400 tracking-tight">
                      {cat.code_id}
                    </h3>
                    {!cat.is_billable && (
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded">Category</span>
+                      <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded transition-colors duration-300">Category</span>
                    )}
                 </div>
-                <p className="text-sm font-medium text-slate-600 line-clamp-3 mt-auto">
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400 line-clamp-3 mt-auto transition-colors duration-300">
                   {cat.title}
                 </p>
               </Link>
