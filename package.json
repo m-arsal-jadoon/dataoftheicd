@@ -17,7 +17,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/build_database.js && node scripts/generate_sitemap.js",
+    "prebuild": "node -e \"require('fs').existsSync('data/master_icd10.json') ? console.log('✅ master_icd10.json found, skipping rebuild.') : require('child_process').execSync('node scripts/build_database.js', {stdio:'inherit'})\"",
     "build": "next build",
     "start": "next start"
   }

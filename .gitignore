@@ -28,6 +28,6 @@ yarn-error.log*
 .vercel
 
 # Project specific large files & generated files
-data/master_icd10.json
+# data/master_icd10.json  <-- tracked via Git LFS, do NOT ignore
 raw_data/
 public/sitemap*.xml
