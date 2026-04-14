@@ -21,18 +21,30 @@ function loadChapters(): { chapters: Chapter[]; totalCodes: number; error: strin
       return {
         chapters: [],
         totalCodes: 0,
-        error: 'Database file not found. Ensure the build pipeline has been run.',
+        error: 'Database file not found in /data directory. Manual upload required.',
       };
+    }
+
+    const stats = fs.statSync(dbPath);
+    if (stats.size < 5120) { // < 5KB typically LFS pointer
+        throw new Error("LFS_POINTER_DETECTED");
     }
 
     const raw = fs.readFileSync(dbPath, 'utf-8');
     if (!raw?.trim()) {
-      return { chapters: [], totalCodes: 0, error: 'Database file is empty.' };
+      return { chapters: [], totalCodes: 0, error: 'Database file is empty. Manual upload required.' };
     }
 
-    const records: any[] = JSON.parse(raw);
+    let records: any[] = [];
+    try {
+        records = JSON.parse(raw);
+    } catch (parseError) {
+        console.error('[ICD-10 Dir] JSON parsing failed:', parseError);
+        return { chapters: [], totalCodes: 0, error: 'Database integrity compromised (JSON parsing failed). Manual upload required.' };
+    }
+    
     if (!Array.isArray(records) || records.length === 0) {
-      return { chapters: [], totalCodes: 0, error: 'Database contains no records.' };
+      return { chapters: [], totalCodes: 0, error: 'Database contains no structurally valid records.' };
     }
 
     // Aggregate unique chapters from the flat record list
@@ -66,11 +78,19 @@ function loadChapters(): { chapters: Chapter[]; totalCodes: number; error: strin
 
     return { chapters, totalCodes, error: null };
   } catch (err: any) {
+    if (err?.message === "LFS_POINTER_DETECTED") {
+        console.error("CRITICAL ERROR: LFS Pointer detected instead of actual JSON data. Manual upload required.");
+        return {
+           chapters: [],
+           totalCodes: 0,
+           error: 'CRITICAL ERROR: LFS Pointer detected instead of actual JSON data. Please upload data folder manually.',
+        };
+    }
     console.error('[ICD-10 Dir] Fatal error loading chapters:', err?.message ?? err);
     return {
       chapters: [],
       totalCodes: 0,
-      error: 'An unexpected error occurred while loading the chapter data.',
+      error: 'An unexpected error occurred while loading the structural taxonomy data. Ensure the database was uploaded correctly.',
     };
   }
 }

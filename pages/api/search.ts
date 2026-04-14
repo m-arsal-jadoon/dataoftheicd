@@ -44,34 +44,50 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
           const fuseIndexPath = path.join(process.cwd(), 'data', 'fuse-index.json');
           
           if (fs.existsSync(dbDataPath) && fs.existsSync(fuseIndexPath)) {
+              const dbStats = fs.statSync(dbDataPath);
+              const fuseStats = fs.statSync(fuseIndexPath);
+              
+              if (dbStats.size < 5120 || fuseStats.size < 5120) {
+                  throw new Error("LFS_POINTER_DETECTED");
+              }
+
               const rawData = fs.readFileSync(dbDataPath, 'utf8');
-              globalAny.memoryDb = JSON.parse(rawData);
-              
               const rawIndex = fs.readFileSync(fuseIndexPath, 'utf8');
-              const myIndex = Fuse.parseIndex(JSON.parse(rawIndex));
               
-              globalAny.fuseInstance = new Fuse(globalAny.memoryDb, {
-                  includeScore: true,
-                  includeMatches: true,
-                  threshold: 0.35, 
-                  ignoreLocation: true,
-                  useExtendedSearch: true,
-                  keys: [
-                    { name: 'code_id', weight: 1.0 },
-                    { name: 'title', weight: 0.7 }
-                  ]
-              }, myIndex);
-              
-              globalAny.memoryDb.forEach((item: any) => {
-                 const cCode = item.code_id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-                 globalAny.exactCodeMap.set(cCode, item);
-              });
-              
-              globalAny.dbLoaded = true;
+              try {
+                  globalAny.memoryDb = JSON.parse(rawData);
+                  const parsedIndex = JSON.parse(rawIndex);
+                  const myIndex = Fuse.parseIndex(parsedIndex);
+                  
+                  globalAny.fuseInstance = new Fuse(globalAny.memoryDb, {
+                      includeScore: true,
+                      includeMatches: true,
+                      threshold: 0.35, 
+                      ignoreLocation: true,
+                      useExtendedSearch: true,
+                      keys: [
+                        { name: 'code_id', weight: 1.0 },
+                        { name: 'title', weight: 0.7 }
+                      ]
+                  }, myIndex);
+                  
+                  globalAny.memoryDb.forEach((item: any) => {
+                     const cCode = item.code_id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                     globalAny.exactCodeMap.set(cCode, item);
+                  });
+                  
+                  globalAny.dbLoaded = true;
+              } catch (parseError) {
+                  console.error("Critical Failure parsing JSON search index database", parseError);
+              }
           }
-      } catch(e) {
-          console.error(e);
-          return res.status(500).json({ error: "Failed to initialize Tokenized Lexicon Index" });
+      } catch(e: any) {
+          if (e?.message === "LFS_POINTER_DETECTED") {
+              console.error("CRITICAL ERROR: LFS Pointer detected instead of actual JSON data. Manual upload required.");
+          } else {
+              console.error("Search API DB Init error:", e);
+          }
+          return res.status(500).json({ error: "Failed to initialize Tokenized Lexicon Index. Possible missing data." });
       }
   }
 

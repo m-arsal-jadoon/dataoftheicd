@@ -26,16 +26,33 @@ export function getAllCodes(): RelationalIcdRecord[] {
     
     try {
         // Points to the new CDC XML parsed database
+        // Always using absolute paths starting from the runtime process cwd
         const dbPath = path.join(process.cwd(), 'data', 'master_icd10.json');
-        if (fs.existsSync(dbPath)) {
-            const dbContent = fs.readFileSync(dbPath, 'utf8');
-            masterDatabaseCache = JSON.parse(dbContent);
-        } else {
+        
+        if (!fs.existsSync(dbPath)) {
             console.error("Critical Error: database/master_icd10.json not found!");
-            masterDatabaseCache = [];
+            return [];
         }
-    } catch (e) {
-        console.error("Critical Failure fetching DB", e);
+
+        const stats = fs.statSync(dbPath);
+        if (stats.size < 5120) { // < 5KB is typically an LFS pointer text file
+            throw new Error("LFS_POINTER_DETECTED");
+        }
+
+        const dbContent = fs.readFileSync(dbPath, 'utf8');
+        try {
+            masterDatabaseCache = JSON.parse(dbContent);
+        } catch (parseError) {
+            console.error("Critical Failure parsing JSON database", parseError);
+            return [];
+        }
+
+    } catch (e: any) {
+        if (e.message === "LFS_POINTER_DETECTED") {
+            console.error("CRITICAL ERROR: LFS Pointer detected instead of actual JSON data. Manual upload required.");
+        } else {
+            console.error("Critical Failure fetching DB", e);
+        }
         masterDatabaseCache = [];
     }
     
