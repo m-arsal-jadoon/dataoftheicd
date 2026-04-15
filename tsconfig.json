@@ -31,11 +31,12 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts""@cloudflare/workers-types"
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"".next",
+    "node_modules",
+    ".next",
     "out",
-    "ICD Token-api"
+    "dataicd10-api"
   ]
 }
