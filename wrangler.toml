@@ -1,0 +1,7 @@
+name = "dataicd10"
+compatibility_date = "2024-04-10"
+pages_build_output_dir = ".vercel/output/static"
+
+[[kv_namespaces]]
+binding = "ICD10_KV"
+id = "d724421cc3f1425ab901b6a5472bb598"

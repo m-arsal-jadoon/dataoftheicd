@@ -31,3 +31,7 @@ yarn-error.log*
 # data/master_icd10.json  <-- tracked via Git LFS, do NOT ignore
 raw_data/
 public/sitemap*.xml
+
+.next/
+*.zip
+node_modules/

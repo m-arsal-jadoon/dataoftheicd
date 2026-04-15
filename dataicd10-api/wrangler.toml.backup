@@ -1,0 +1,8 @@
+name = "dataicd10-api"
+main = "src/index.ts"
+compatibility_date = "2024-04-10"
+
+# Bind KV Namespace. You'll replace the ID after `wrangler kv:namespace create`
+[[kv_namespaces]]
+binding = "ICD10_KV"
+id = "d724421cc3f1425ab901b6a5472bb598"
