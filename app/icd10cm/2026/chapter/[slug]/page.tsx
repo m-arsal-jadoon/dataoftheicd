@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 import Link from 'next/link';
 import { getAllChapters, getSubSectionsByChapter } from '../../../../../lib/data-engine/db';
 import Layout from '../../../../../components/Layout';

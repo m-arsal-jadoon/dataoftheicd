@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 import { fetchCodeBySlug, getSiblings, getChildren, getRelatedCodes } from '../../../../../lib/data-engine/db';
 import { redirect } from 'next/navigation';
 import Layout from '../../../../../components/Layout';
