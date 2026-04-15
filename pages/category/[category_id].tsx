@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import type { GetStaticProps, GetStaticPaths, NextPage } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
